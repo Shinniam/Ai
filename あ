@@ -1,0 +1,107 @@
+import random
+import time
+
+class HumanLikeAI:
+    def __init__(self):
+        # 内部感情スコア（0が中立、±10で感情の極端な変化）
+        self.emotions = {
+            "happy": 0,
+            "sad": 0,
+            "angry": 0,
+            "excited": 0
+        }
+        self.mood = "neutral"  # 現在のムード
+        self.conversation_history = []  # 会話履歴
+
+    def update_emotions(self, text):
+        """入力によって感情スコアを変化させる"""
+        text_lower = text.lower()
+        
+        # 感情に影響を与える単語とその影響度
+        emotion_triggers = {
+            "happy": (["楽しい", "うれしい", "最高", "大好き", "good", "happy"], 2),
+            "sad": (["悲しい", "最悪", "疲れた", "嫌だ", "bad", "sad"], -3),
+            "angry": (["ムカつく", "怒", "最低", "許せない", "angry"], -4),
+            "excited": (["楽しみ", "ワクワク", "すごい", "amazing", "excited"], 3)
+        }
+        
+        # 入力に応じて感情スコアを変化
+        for emotion, (keywords, impact) in emotion_triggers.items():
+            if any(word in text_lower for word in keywords):
+                self.emotions[emotion] += impact
+
+        # 感情が極端になりすぎないように制限
+        for key in self.emotions:
+            if self.emotions[key] > 10:
+                self.emotions[key] = 10
+            elif self.emotions[key] < -10:
+                self.emotions[key] = -10
+
+        # 感情の減衰（ゆっくり元に戻る）
+        for key in self.emotions:
+            if self.emotions[key] > 0:
+                self.emotions[key] -= random.randint(0, 1)
+            elif self.emotions[key] < 0:
+                self.emotions[key] += random.randint(0, 1)
+
+        # どの感情が強いかで現在のムードを決定
+        strongest_emotion = max(self.emotions, key=self.emotions.get)
+        if abs(self.emotions[strongest_emotion]) > 3:
+            self.mood = strongest_emotion
+        else:
+            self.mood = "neutral"
+
+    def generate_response(self, text):
+        """現在のムードに応じた自然な返答を生成"""
+        self.update_emotions(text)
+
+        responses = {
+            "happy": [
+                "すごくいい気分！君と話せて楽しいな。",
+                "いいね！なんだか気持ちが明るくなるよ。",
+                "嬉しい話を聞くと、もっと元気になるね。"
+            ],
+            "sad": [
+                "ちょっと気持ちが沈んでるかも…君の話を聞くと少し楽になるかな。",
+                "うーん、今日はあまり元気が出ないな…。",
+                "そんな日もあるよね。少しゆっくりしようか。"
+            ],
+            "angry": [
+                "ちょっとイライラしてる…どうしてこうなったんだろう？",
+                "ああ、なんかムカつくことがあったんだよね…。",
+                "落ち着こうと思ってるけど、なかなか難しいな…。"
+            ],
+            "excited": [
+                "やばい、めっちゃワクワクしてる！",
+                "うおー！テンション上がってきた！",
+                "楽しくなってきたね！何か面白い話しよう！"
+            ],
+            "neutral": [
+                "ふむふむ、それでそれで？",
+                "なるほどね〜。",
+                "そっか〜。"
+            ]
+        }
+
+        # 自然な会話のために少し遅れて返答
+        time.sleep(random.uniform(0.7, 1.5))
+        
+        response = random.choice(responses[self.mood])
+        self.conversation_history.append({
+            "input": text,
+            "mood": self.mood,
+            "emotions": self.emotions.copy(),
+            "response": response
+        })
+        return response
+
+if __name__ == "__main__":
+    ai = HumanLikeAI()
+    print("🤖 AIと会話しましょう！（終了するには 'exit' または 'quit' と入力）")
+
+    while True:
+        user_input = input("あなた: ")
+        if user_input.lower() in ["exit", "quit"]:
+            print("🤖 AI: 今日は楽しかったよ！また話そうね！")
+            break
+        print("🤖 AI:", ai.generate_response(user_input))
